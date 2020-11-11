@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        background: black;
+      }
+      .container {
+        width: 210mm;
+        height: 297mm;
+        /*padding: 10px 10px;*/
+        background: #fff;
+        color: #333;
+        margin: 0 auto;
+        font-size: 22px;
+        box-sizing: border-box;
+      }
+      /* tip: 可以有多种方式实现多栏布局，grid, 百分比布局，float, position都可以实现 */
+      .detail {
+        display: flex;  
+        padding: 20px 20px;
+      }
+      .detail > span {
+        flex: 1;
+      }
+      .inner {
+        display: flex;
+        flex-direction: row;
+        padding: 20px 20px;
+      }
+      .inner .panel {
+        flex: 1;
+      }
+      .inner .panel .panel-item {
+        line-height: 40px;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="detail">
+        <span>姓名： </span>
+        <span>班级：</span>
+        <span>用时：</span>
+      </div>
+      <div class="inner"></div>
+    </div>
+    <script>
+      // 以下方法为原生js实现，在框架vue or react中，直接实现model和view分离， 具体实现见最下方注释
+      // 发起ajax请求or fetch请求从接口获取
+
+      // 将一位数组转换为均等二维数组
+      function chunk(arr, num) {
+        num = num || 1;
+        let ret = [];
+        arr.forEach((item, index) => {
+          if (index % num === 0) {
+            ret.push([]);
+          }
+          ret[ret.length - 1].push(item);
+        });
+        return ret;
+      }
+
+      let xhr = new XMLHttpRequest();
+      xhr.onreadystatechange=function() {
+        if(this.readyState === 4 && xhr.status == 200 || xhr.status == 304) {
+          console.log(this.responseText);
+          const jsonData = JSON.parse(this.responseText);
+          const computedJsonData = chunk(jsonData,25);
+
+          // 动态拼接字符串
+          let html = "";
+          computedJsonData.forEach((panel) => {
+            html += '<div class="panel">';
+            panel.forEach((item) => {
+              html += `<div class="panel-item">${item}</div>`;
+            });
+            html += "</div>";
+            html += '<div class="panel"></div>';
+          });
+          document.querySelector(".inner").innerHTML = html;
+        }
+      };
+      let orgUrl = location.search; //获取url中"?"符后的字串
+      let url
+      if (orgUrl.indexOf("?") != -1) {    //判断是否有参数
+        url= "http://localhost:8080/exam?"+orgUrl.substr(1);
+      }else{
+        url= "http://localhost:8080/exam";
+      }
+      xhr.open("GET", url);
+      xhr.setRequestHeader("Content-Type","application/json");
+      xhr.send();
+
+    </script>
+  </body>
+</html>
+
+
+<!--  // vue框架中实现, 需要编译器打包， react同理
+<template>
+  <div class="container">
+    <div v-for="(panel,index) in computedJsonData" class="panel" :key="index">
+      <div v-for="(item, idx)" class="panel-item" :key="idx">{{item}}</div>
+    </div>
+  </div>
+</template>
+
+<script>
+  // 该方法放到util共用方法中
+  function chunk(arr, num) {
+    num = num || 1;
+    let ret = [];
+    arr.forEach((item, index) => {
+      if (index % num === 0) {
+        ret.push([]);
+      }
+      ret[ret.length - 1].push(item);
+    });
+    return ret;
+  }
+
+  export default {
+    data: {
+      jsonData: [],
+    },
+    computed: {
+      computedJsonData() {
+        if (!this.jsonData.length) return []
+        return chunk(this.jsonData, 25)
+      }
+    },
+    async mounted() {
+      // 从接口获取数据
+      this.jsonData = await fetch();
+    }
+  };
+</script> -->

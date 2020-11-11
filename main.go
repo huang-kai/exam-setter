@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 func newApp() *iris.Application {
 	app := iris.New()
 	app.Logger().SetLevel("debug")
@@ -44,7 +43,9 @@ func newApp() *iris.Application {
 	app.Use(requestLogger)
 	//app.Use(crs)
 	app.AllowMethods(iris.MethodOptions)
-
+	app.HandleDir("/", "./res", iris.DirOptions{
+		IndexName: "index.html",
+	})
 	//party := app.Party("/", crs).AllowMethods(iris.MethodOptions)
 	//{
 	app.Get("/health", healthCheck)
@@ -73,41 +74,52 @@ func healthCheck(ctx iris.Context) {
 	ctx.WriteString("OK")
 }
 
-func genExam(ctx iris.Context)  {
+func genExam(ctx iris.Context) {
 	rand.Seed(time.Now().UnixNano())
 	examRange := ctx.URLParamIntDefault("range", 10)
 	examCount := ctx.URLParamIntDefault("count", 100)
 	examSymbol := ctx.URLParamDefault("symbol", "1,2")
-	symbols := strings.Split(examSymbol,",")
+	examDiff := ctx.URLParamIntDefault("diff", 0)
+	symbols := strings.Split(examSymbol, ",")
 	array := make([]string, examCount)
-	for i := 0; i<examCount;i++ {
+	for i := 0; i < examCount; i++ {
 		index := rand.Intn(len(symbols))
 		for {
 			num1 := rand.Intn(examRange)
 			num2 := rand.Intn(examRange)
-
+			if num1 == 0 || num2 == 0 {
+				continue
+			}
 			var result int
 			switch symbols[index] {
 			case "1":
-				result = num1 + num2
+				if examDiff == 1 {
+					if num2%10+num1%10 > 10 {
+						result = num1 + num2
+					} else {
+						continue
+					}
+				} else {
+					result = num1 + num2
+				}
 			case "2":
-				if num1>=num2{
+				if num1 >= num2 {
 					result = num1 - num2
-				}else{
+				} else {
 					continue
 				}
 			case "3":
 				result = num1 * num2
 			case "4":
-				if num1>=num2 && num1%num2 == 0 {
-					result = num1/num2
-				}else {
+				if num1 >= num2 && num1%num2 == 0 {
+					result = num1 / num2
+				} else {
 					continue
 				}
 			}
 
-			if result<=examRange {
-				array[i]=strconv.Itoa(num1)+getStringSymbol(symbols[index])+strconv.Itoa(num2)+"="
+			if result <= examRange {
+				array[i] = strconv.Itoa(num1) + " " + getStringSymbol(symbols[index]) + " " + strconv.Itoa(num2) + " ="
 				break
 			}
 		}
