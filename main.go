@@ -87,27 +87,45 @@ func genExam(ctx iris.Context) {
 		for {
 			num1 := rand.Intn(examRange)
 			num2 := rand.Intn(examRange)
+			num3 := rand.Intn(examRange)
 			if num1 == 0 || num2 == 0 {
 				continue
 			}
 			var result int
 			switch symbols[index] {
 			case "1":
-				if examDiff == 1 {
+				switch examDiff {
+				case 1:
 					if num2%10+num1%10 > 10 {
 						result = num1 + num2
 					} else {
 						continue
 					}
-				} else {
+				case 2:
+					if num2%10+num1%10+num3%10 > 10 {
+						result = num1 + num2 + num3
+					} else {
+						continue
+					}
+				default:
 					result = num1 + num2
 				}
 			case "2":
-				if num1 >= num2 {
-					result = num1 - num2
-				} else {
-					continue
+				switch examDiff {
+				case 2:
+					if num1-num2-num3 >= 0 {
+						result = num1 - num2 - num3
+					} else {
+						continue
+					}
+				default:
+					if num1 >= num2 {
+						result = num1 - num2
+					} else {
+						continue
+					}
 				}
+
 			case "3":
 				result = num1 * num2
 			case "4":
@@ -119,7 +137,12 @@ func genExam(ctx iris.Context) {
 			}
 
 			if result <= examRange {
-				array[i] = strconv.Itoa(num1) + " " + getStringSymbol(symbols[index]) + " " + strconv.Itoa(num2) + " ="
+				switch examDiff {
+				case 2:
+					array[i] = strconv.Itoa(num1) + getStringSymbol(symbols[index]) + strconv.Itoa(num2) + getStringSymbol(symbols[index]) + strconv.Itoa(num3) + " ="
+				default:
+					array[i] = strconv.Itoa(num1) + getStringSymbol(symbols[index]) + strconv.Itoa(num2) + " ="
+				}
 				break
 			}
 		}
